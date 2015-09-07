@@ -28,38 +28,40 @@ int main(void) {
 	CT_INTC.GER = 1;
 
 	__R31 = 0x0;
-	__R30 = 0x0;
+	__R30 = 0x1;
 
 	I2C_CLK[0] = 0x2;
 	unsigned char val;
 	while (((val = (I2C_CLK[2]) & 0x3)) != 0) {
 		switch (val) {
 		case 1:
-			__R31 = (1 << 1);
+			__R30 = (1 << 1);
 			break;
 		case 2:
-			__R31 = (1 << 2);
+			__R30 = (1 << 2);
 			break;
 		case 3:
-			__R31 = (1 << 3);
+			__R30 = (1 << 3);
 			break;
 		default:
-			__R31 = 0;
+			__R30 = 0;
 			break;
 		}
 	}
 
-	//__R31 = ((24 - 16) | (1 << 5)); //EVENT 2
 	__R30 = (1 << 2);
 
 	/*
+	 * This reset stuff is not currently working....
 	CT_I2C.SYSC = 0x2;
 	CT_I2C.SYSC = 0x0;
 
 	while (CT_I2C.SYSS_bit.RDONE == 0) {};
-	//__R31 = ((24 - 16) | (1 << 5)); //EVENT 2
 	*/
 
+	/*
+	 * Some pinmux notes....
+	 */
 	//I2C2_SCL pinmux 0x73 pin19 (0x17c)
 	// -> 111 0011
 	// -> bit 6: 1: slow
@@ -88,23 +90,25 @@ int main(void) {
 	// -> bit 34: 00: pulldown
 	// -> bit 012: 100: mode 4
 
+	/*
+	 * some notes re: gy-80...
+	 */
 	// Chip 1 - L883 2243 compass
 	// Chip 2 - AGD8 2310 3R1EX  gyroscope
 	// Chip 3 - 345B #419 3793 PHIL
 
-	//i2c device
-	//ag28 2310 3r1bx
-
-	//48mhz / 2 ~= 24mhz
 	CT_I2C.CON_bit.I2C_EN = 0;
+
+	//48mhz / 2 = 24mhz
 	CT_I2C.PSC_bit.PSC = 1;
 
 	//24mhz / (2 * 400khz) = 30
-	CT_I2C.SCLL_bit.SCLL = 23;
-	CT_I2C.SCLH_bit.SCLH = 25;
-	//CT_I2C.OA_bit.OA = 0; // not sure what to set this to for master mode
+	CT_I2C.SCLL_bit.SCLL = 23; //x + 7
+	CT_I2C.SCLH_bit.SCLH = 25; // x + 8
+	//CT_I2C.OA_bit.OA = 0; // don't need to set this to anything for master mode
 	CT_I2C.CON_bit.MST = 1;
 	CT_I2C.SA = 0x77;
+
 
 	CT_I2C.CON_bit.I2C_EN = 1;
 	uint16_t AC6 = read16(0xb4);
@@ -125,13 +129,21 @@ int main(void) {
 		long T = (b5 + 8) >> 4;
 
 		if (prevT != T) {
+
+			if (prevT < T) {
+				__R30 = 1 << 3;
+			} else {
+				__R30 = 1 << 0;
+			}
+
 			prevT = T;
+			*((long*)BUFFER) = T;
 			__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
 		}
-		*((long*)BUFFER) = T;
 		__delay_cycles(200000 * 100);
 	}
-	__halt();
+
+	__halt();  //need to code some interrupt response to break out of the loop
 	return 0;
 }
 
@@ -147,6 +159,7 @@ void write8(uint8_t reg, uint8_t val)
 	/*
 	CMD_ENABLE CMD_MASTER CMD_TX CMD_STP CMD_START
 	*/
+	// need #defines for all these bits...  can I set individual bits? what iniitiates the activity?
 	CT_I2C.CON = (1 << 15) | (1 << 10) | (1 << 9) | (1 << 1) | (1 << 0);
 	while (CT_I2C.CON_bit.STP != 0) {};
 }
@@ -161,6 +174,7 @@ uint16_t read16(uint8_t reg)
 	/*
 	CMD_ENABLE CMD_MASTER CMD_TX CMD_START
 	*/
+	// need #defines for all these bits...  can I set individual bits? what iniitiates the activity?
 	CT_I2C.CON = (1 << 15) | (1 << 10) | (1 << 9) | (1 << 0);
 	//wait by count
 	while (CT_I2C.CNT != 0) {};
