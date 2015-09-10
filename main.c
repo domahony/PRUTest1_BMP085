@@ -3,6 +3,8 @@
 #include <pru_intc.h>
 #include "../PRUController/GY80.h"
 #include "i2c.h"
+#include "bmp085.h"
+#include "adxl345.h"
 
 volatile far pruIntc CT_INTC __attribute__((cregister("PRU_INTC", far), peripheral));
 volatile pruCfg CT_CFG __attribute__((cregister("PRU_CFG", near), peripheral));
@@ -34,37 +36,25 @@ int main(void) {
 	// Chip 3 - 345B #419 3793 PHIL
 
 	i2c_init();
-	i2c_begin(0x77);
-	uint16_t AC6 = i2c_read16(0xb4);
-	uint16_t AC5 = i2c_read16(0xb2);
-	int16_t MC = (int16_t)i2c_read16(0xbc);
-	int16_t MD = (int16_t)i2c_read16(0xbe);
-	i2c_end();
 
-	long prevT = 0;
+	bmp085_init();
+	adxl345_init();
+
+	float prevT = 0.0;
 	while (1) {
-		i2c_begin(0x77);
-		i2c_write8(0xF4, 0x2E);
-		i2c_end();
-		__delay_cycles(200000 * 4.5);
 
-		long ut = (long)i2c_read16(0xF6);
+		bmp085_get_reading(&gy80);
+		adxl345_get_reading(&gy80);
 
-		long x1 = (ut - ((int32_t)AC6)) * ((int32_t)AC5) >> 15;
-		long x2 = (((int32_t)MC) << 11) / (x1 + (int32_t)MD);
-		long b5 = x1 + x2;
-		long T = (b5 + 8) >> 4;
+		if (prevT != gy80.temperature) {
 
-		if (prevT != T) {
-
-			if (prevT < T) {
+			if (prevT < gy80.temperature) {
 				__R30 = 1 << 3;
 			} else {
 				__R30 = 1 << 0;
 			}
 
-			prevT = T;
-			gy80.temperature = T/10.;
+			prevT = gy80.temperature;
 			__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
 		}
 		__delay_cycles(200000 * 100);
