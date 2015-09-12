@@ -93,7 +93,8 @@ void i2c_write8(uint8_t reg, uint8_t val)
 	while (CT_I2C.CON_bit.STP != 0) {};
 }
 
-uint16_t i2c_read16(uint8_t reg)
+uint16_t
+i2c_read16(uint8_t reg)
 {
 	//write 1 byte register address
 	CT_I2C.CNT = 1;
@@ -116,6 +117,33 @@ uint16_t i2c_read16(uint8_t reg)
 	ret |= CT_I2C.DATA_bit.DATA;
 
 	return ret;
+}
+uint16_t
+i2c_read(uint8_t reg, uint8_t* buf, uint16_t sz)
+{
+		//write 1 byte register address
+	CT_I2C.CNT = 1;
+	CT_I2C.DATA = reg;
+
+	while(CT_I2C.IRQSTATUS_RAW_bit.BB != 0) {}
+	/*
+	CMD_ENABLE CMD_MASTER CMD_TX CMD_START
+	*/
+	// need #defines for all these bits...  can I set individual bits? what iniitiates the activity?
+	CT_I2C.CON = (1 << 15) | (1 << 10) | (1 << 9) | (1 << 0);
+	//wait by count
+	while (CT_I2C.CNT != 0) {};
+
+	CT_I2C.CNT = sz;
+	CT_I2C.CON = (1 << 15) | (1 << 10) | (0 << 9) | (1 << 1) | (1 << 0);
+	while (CT_I2C.CON_bit.STP != 0) {};
+
+	int i;
+	for (i = 0; i < sz; i++) {
+		buf[i] = CT_I2C.DATA_bit.DATA;
+	}
+
+	return sz;
 }
 
 uint8_t i2c_read8(uint8_t reg)

@@ -55,8 +55,9 @@ int main(void) {
 			}
 
 			prevT = gy80.temperature;
-			__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
 		}
+
+		__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
 		__delay_cycles(200000 * 100);
 	}
 	__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
