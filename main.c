@@ -5,6 +5,7 @@
 #include "i2c.h"
 #include "bmp085.h"
 #include "adxl345.h"
+#include "l3g4200.h"
 
 volatile far pruIntc CT_INTC __attribute__((cregister("PRU_INTC", far), peripheral));
 volatile pruCfg CT_CFG __attribute__((cregister("PRU_CFG", near), peripheral));
@@ -39,12 +40,14 @@ int main(void) {
 
 	bmp085_init();
 	adxl345_init();
+	l3g4200_init();
 
 	float prevT = 0.0;
 	while (1) {
 
 		bmp085_get_reading(&gy80);
 		adxl345_get_reading(&gy80);
+		l3g4200_get_reading(&gy80);
 
 		if (prevT != gy80.temperature) {
 
