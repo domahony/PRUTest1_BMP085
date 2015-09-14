@@ -1,7 +1,7 @@
-# PRUTest1_BMP085
+# PRUTest1_GY80
 
-Support for the GY-80 10dof breakout board.
+Beaglebone Black PRU module that interfaces with GY80 breakout board.
 
-The i2c calls to the sensors run on a BeagleBone Black PRU.
+Polls the sensors every 1 second and writes the sensor readings to shared memory.
 
-To be renamed, and refactored, etc.
+An event is fired after update to notify a host program.
