@@ -40,7 +40,7 @@
 #define	INACTIVITY			(1 << 3)
 #define	FREE_FALL			(1 << 2)
 #define	WATERMARK			(1 << 1)
-#define	OVERRUN				(0)
+#define	OVERRUN				(1)
 
 #define REG_BW_RATE			(0x2C)
 #define LOW_POWER			(1 << 4)
@@ -116,7 +116,7 @@ adxl345_get_reading(GY80* gy80)
 {
 	uint8_t buf[6];
 	i2c_begin(ADXL345_ADDRESS);
-	i2c_read(REG_DATA, buf, 6);
+	i2c_read(REG_DATA, buf, sizeof(buf)/sizeof(buf[0]));
 	i2c_end();
 
 	uint16_t x = buf[1] << 8 | buf[0];
