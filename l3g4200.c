@@ -26,6 +26,15 @@
 #define FS_2000A				(2 << 4)
 #define FS_2000B				(3 << 4)
 
+#define REG_CTRL_REG5			(0x24)
+#define BOOT					(1 << 7)
+#define FIFO_EN					(1 << 6)
+#define HPEN					(1 << 4)
+#define INT_SEL1				(1 << 3)
+#define INT_SEL0				(1 << 2)
+#define OUT_SEL1				(1 << 1)
+#define OUT_SEL0				(1 << 0)
+
 #define REG_OUT					(0x28)
 #define REG_OUTXL				(0x28)
 #define REG_OUTXH				(0x29)
@@ -48,6 +57,8 @@ l3g4200_init()
 
 	i2c_write8(REG_CTRL_REG4, FS_250 | BLE | BDU);
 	uint8_t ctrl4 = i2c_read8(REG_CTRL_REG4);
+
+	i2c_write8(REG_CTRL_REG5, HPEN);
 
 	uint32_t range;
 
@@ -75,7 +86,7 @@ l3g4200_get_reading(GY80* gy80)
 {
 	uint8_t buf[6];
 	i2c_begin(L3G4200_ADDRESS);
-	i2c_read(REG_OUT, buf, sizeof(buf)/sizeof(buf[0]));
+	i2c_read(REG_OUT | 0x80, buf, sizeof(buf)/sizeof(buf[0]));
 	i2c_end();
 
 	uint16_t x = buf[0] << 8 | buf[1];
