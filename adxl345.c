@@ -116,7 +116,7 @@ adxl345_get_reading(GY80* gy80)
 {
 	uint8_t buf[6];
 	i2c_begin(ADXL345_ADDRESS);
-	i2c_read(REG_DATA, buf, sizeof(buf)/sizeof(buf[0]));
+	i2c_read(REG_DATA | 0x80, buf, sizeof(buf)/sizeof(buf[0]));
 	i2c_end();
 
 	uint16_t x = buf[1] << 8 | buf[0];
