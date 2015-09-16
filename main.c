@@ -61,7 +61,7 @@ int main(void) {
 		}
 
 		__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
-		__delay_cycles(200000 * 100);
+		__delay_cycles(2000000 * 50);
 	}
 	__R31 = ((24 - 16) | (1 << 5)); //EVENT 3
 
